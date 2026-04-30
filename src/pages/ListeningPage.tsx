@@ -7,6 +7,8 @@ import { TtsButton } from '../components/TtsButton'
 import { useTestTimer } from '../hooks/useTestTimer'
 import { TestTimerBar } from '../components/TestTimerBar'
 import type { ListeningPart, ListeningQuestion } from '../types'
+import { listeningRawToBand } from '../lib/ieltsBand'
+import { saveListeningScore } from '../lib/scoreStore'
 
 function normalize(s: string): string {
   return s.trim().toLowerCase()
@@ -74,6 +76,17 @@ export function ListeningPage() {
     }
     return { correct, total }
   }, [allQuestions, gapValues, mcqChoice, showResults])
+
+  function saveToScores() {
+    if (!score) return
+    saveListeningScore({
+      kind: 'listening',
+      createdAt: new Date().toISOString(),
+      correct: score.correct,
+      total: score.total,
+      estimatedBand: listeningRawToBand(score.correct),
+    })
+  }
 
   function newRandomTest() {
     if (examActive) return
@@ -207,6 +220,11 @@ export function ListeningPage() {
           <p className="score" role="status">
             Score: {score.correct} / {score.total}
           </p>
+        )}
+        {score && (
+          <button type="button" className="btn" onClick={saveToScores}>
+            Save to Scores page
+          </button>
         )}
       </div>
     </article>

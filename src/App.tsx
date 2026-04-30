@@ -5,6 +5,7 @@ import { ListeningPage } from './pages/ListeningPage'
 import { ReadingPage } from './pages/ReadingPage'
 import { SpeakingPage } from './pages/SpeakingPage'
 import { WritingPage } from './pages/WritingPage'
+import { ScoresPage } from './pages/ScoresPage'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="reading" element={<ReadingPage />} />
         <Route path="writing" element={<WritingPage />} />
         <Route path="speaking" element={<SpeakingPage />} />
+        <Route path="scores" element={<ScoresPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

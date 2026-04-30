@@ -6,6 +6,8 @@ import {
 import { useTestTimer } from '../hooks/useTestTimer'
 import { TestTimerBar } from '../components/TestTimerBar'
 import type { ReadingQuestion } from '../types'
+import { academicReadingRawToBand } from '../lib/ieltsBand'
+import { saveReadingScore } from '../lib/scoreStore'
 
 export function ReadingPage() {
   const [sessionKey, setSessionKey] = useState(0)
@@ -42,6 +44,17 @@ export function ReadingPage() {
     }
     return { correct: c, total: t }
   }, [allQuestions, mcq, showResults, tfng])
+
+  function saveToScores() {
+    if (!score) return
+    saveReadingScore({
+      kind: 'reading',
+      createdAt: new Date().toISOString(),
+      correct: score.correct,
+      total: score.total,
+      estimatedBand: academicReadingRawToBand(score.correct),
+    })
+  }
 
   function newExam() {
     if (examActive) return
@@ -151,6 +164,11 @@ export function ReadingPage() {
           <p className="score" role="status">
             Score: {score.correct} / {score.total}
           </p>
+        )}
+        {score && (
+          <button type="button" className="btn" onClick={saveToScores}>
+            Save to Scores page
+          </button>
         )}
       </div>
     </article>

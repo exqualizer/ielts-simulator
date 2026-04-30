@@ -6,6 +6,7 @@ const nav = [
   { to: '/reading', label: 'Reading' },
   { to: '/writing', label: 'Writing' },
   { to: '/speaking', label: 'Speaking' },
+  { to: '/scores', label: 'Scores' },
 ]
 
 export function Layout() {

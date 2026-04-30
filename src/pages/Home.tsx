@@ -25,6 +25,12 @@ const cards = [
     desc: 'Random Part 1–3 prompts; Part 2 timers; optional TTS examiner prompts.',
     time: '~11–14 min',
   },
+  {
+    to: '/scores',
+    title: 'Scores',
+    desc: 'View saved practice scores and band reference.',
+    time: 'any time',
+  },
 ]
 
 export function Home() {

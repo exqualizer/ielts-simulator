@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TtsButton } from '../components/TtsButton'
+import { AudioRecorder, type RecordedAnswer } from '../components/AudioRecorder'
 import {
   PART2_PREP_SEC,
   PART2_SPEAK_SEC,
   buildRandomSpeakingSession,
 } from '../data/speakingBank'
 import { formatClock } from '../hooks/useTestTimer'
+import { checkSpeaking } from '../lib/speakingChecker'
+import {
+  saveSpeakingSessionScore,
+  type SpeakingQuestionScore,
+  type SpeakingSessionScore,
+} from '../lib/scoreStore'
 
 type Phase =
   | 'intro'
@@ -39,6 +46,7 @@ export function SpeakingPage() {
   const [phase, setPhase] = useState<Phase>('intro')
   const [prepLeft, setPrepLeft] = useState(PART2_PREP_SEC)
   const [longLeft, setLongLeft] = useState(PART2_SPEAK_SEC)
+  const [scores, setScores] = useState<Record<string, SpeakingQuestionScore>>({})
 
   useEffect(() => {
     if (phase !== 'part2_prep' && phase !== 'part2_long') return
@@ -75,6 +83,35 @@ export function SpeakingPage() {
     setPhase('intro')
     setPrepLeft(PART2_PREP_SEC)
     setLongLeft(PART2_SPEAK_SEC)
+    setScores({})
+  }
+
+  function saveScore(id: string, label: string, rec: RecordedAnswer) {
+    const item = checkSpeaking({
+      id,
+      label,
+      createdAt: rec.createdAt,
+      durationSec: rec.durationSec,
+      silenceRatio: rec.silenceRatio,
+      estimatedPauseCount: rec.estimatedPauseCount,
+      transcript: rec.transcript,
+      transcriptConfidence: rec.transcriptConfidence,
+    })
+    setScores((prev) => ({ ...prev, [id]: item }))
+  }
+
+  function buildSessionScore(): SpeakingSessionScore {
+    const items = Object.values(scores).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    const overallBand =
+      items.length === 0
+        ? 0
+        : Math.round(((items.reduce((s, x) => s + x.overallBand, 0) / items.length) * 2)) / 2
+    return {
+      kind: 'speaking',
+      createdAt: new Date().toISOString(),
+      items,
+      overallBand,
+    }
   }
 
   return (
@@ -84,8 +121,9 @@ export function SpeakingPage() {
         <p className="paper__meta">
           Parts 1–3 with random prompts each session. Use <strong>Play</strong> to
           hear examiner-style lines via your browser’s text-to-speech (not a
-          human recording). Practise speaking aloud; use a voice memo app if you
-          want to record yourself.
+          human recording). Practise speaking aloud and record answers here. The
+          checker is a practice estimate based on timing signals and (if your
+          browser supports it) live speech-to-text.
         </p>
       </header>
 
@@ -119,7 +157,9 @@ export function SpeakingPage() {
             like an examiner prompt.
           </p>
           <ol className="speak-list speak-list--audio">
-            {session.part1.map((q) => (
+            {session.part1.map((q, idx) => {
+              const id = `p1_${idx}`
+              return (
               <li key={q}>
                 <span className="speak-q">{q}</span>
                 <TtsButton
@@ -127,8 +167,14 @@ export function SpeakingPage() {
                   label="Play"
                   className="speak-tts"
                 />
+                <AudioRecorder
+                  label="Answer"
+                  onRecorded={(rec) => saveScore(id, `Part 1 Q${idx + 1}`, rec)}
+                />
+                {scores[id] && <SpeakingInlineScore s={scores[id]} />}
               </li>
-            ))}
+              )
+            })}
           </ol>
           <button
             type="button"
@@ -201,6 +247,13 @@ export function SpeakingPage() {
             )}
             label="Replay cue"
           />
+          <div className="rec-block">
+            <AudioRecorder
+              label="Record your long turn"
+              onRecorded={(rec) => saveScore('p2_long', 'Part 2 long turn', rec)}
+            />
+            {scores.p2_long && <SpeakingInlineScore s={scores.p2_long} />}
+          </div>
         </section>
       )}
 
@@ -211,7 +264,9 @@ export function SpeakingPage() {
             Discuss in more depth. Play each question if you want an oral prompt.
           </p>
           <ol className="speak-list speak-list--audio">
-            {session.part3.map((q) => (
+            {session.part3.map((q, idx) => {
+              const id = `p3_${idx}`
+              return (
               <li key={q}>
                 <span className="speak-q">{q}</span>
                 <TtsButton
@@ -219,8 +274,14 @@ export function SpeakingPage() {
                   label="Play"
                   className="speak-tts"
                 />
+                <AudioRecorder
+                  label="Answer"
+                  onRecorded={(rec) => saveScore(id, `Part 3 Q${idx + 1}`, rec)}
+                />
+                {scores[id] && <SpeakingInlineScore s={scores[id]} />}
               </li>
-            ))}
+              )
+            })}
           </ol>
           <button
             type="button"
@@ -239,6 +300,22 @@ export function SpeakingPage() {
             Reset to draw a new random set of Part 1 topics, a new cue card, and
             new Part 3 questions.
           </p>
+          <div className="panel panel--accent">
+            <h3>Estimated speaking band (this session)</h3>
+            <p className="score">Overall: {buildSessionScore().overallBand.toFixed(1)}</p>
+            <p className="hint">
+              This is a practice estimate from your recordings. Use the Scores
+              page to see the full breakdown.
+            </p>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => saveSpeakingSessionScore(buildSessionScore())}
+              disabled={Object.keys(scores).length === 0}
+            >
+              Save to Scores page
+            </button>
+          </div>
           <button
             type="button"
             className="btn btn--primary"
@@ -249,5 +326,17 @@ export function SpeakingPage() {
         </section>
       )}
     </article>
+  )
+}
+
+function SpeakingInlineScore({ s }: { s: SpeakingQuestionScore }) {
+  return (
+    <p className="inline-result" role="status">
+      <strong>Estimated band:</strong> {s.overallBand.toFixed(1)}{' '}
+      <span className="tag tag--ok">FC {s.criteria[0].band.toFixed(1)}</span>{' '}
+      <span className="tag tag--ok">LR {s.criteria[1].band.toFixed(1)}</span>{' '}
+      <span className="tag tag--ok">GRA {s.criteria[2].band.toFixed(1)}</span>{' '}
+      <span className="tag tag--ok">P {s.criteria[3].band.toFixed(1)}</span>
+    </p>
   )
 }
