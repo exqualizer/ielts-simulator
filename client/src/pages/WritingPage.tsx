@@ -5,6 +5,7 @@ import { TestTimerBar } from '../components/TestTimerBar'
 import { checkWriting, type WritingCheckResult } from '../lib/writingChecker'
 import { saveWritingScore } from '../lib/scoreStore'
 import { weightedWritingOverall } from '../lib/ieltsBand'
+import { ScoreSummaryModal } from '../components/ScoreSummaryModal'
 
 const WRITING_SEC = 60 * 60
 
@@ -22,13 +23,15 @@ export function WritingPage() {
     return buildRandomWritingPair()
   }, [sessionKey])
 
-  const { secondsLeft, running, start, pause, reset } = useTestTimer({
+  const { secondsLeft, running, start, pause, reset, startedAt, endedAt, durationSec } = useTestTimer({
     initialSeconds: WRITING_SEC,
   })
   const [task1, setTask1] = useState('')
   const [task2, setTask2] = useState('')
   const [result1, setResult1] = useState<WritingCheckResult | null>(null)
   const [result2, setResult2] = useState<WritingCheckResult | null>(null)
+  const [showModal, setShowModal] = useState(false)
+  const [modalEndedAt, setModalEndedAt] = useState<string | null>(null)
 
   const w1 = useMemo(() => countWords(task1), [task1])
   const w2 = useMemo(() => countWords(task2), [task2])
@@ -42,6 +45,8 @@ export function WritingPage() {
     setTask2('')
     setResult1(null)
     setResult2(null)
+    setShowModal(false)
+    setModalEndedAt(null)
     reset()
   }
 
@@ -56,6 +61,8 @@ export function WritingPage() {
   function runCheckBoth() {
     setResult1(checkWriting('task1', task1))
     setResult2(checkWriting('task2', task2))
+    setModalEndedAt(new Date().toISOString())
+    setShowModal(true)
   }
 
   function saveToScores() {
@@ -138,14 +145,6 @@ export function WritingPage() {
         >
           Check writing (Task 1 + Task 2)
         </button>
-        <button
-          type="button"
-          className="btn"
-          onClick={saveToScores}
-          disabled={!result1 || !result2}
-        >
-          Save to Scores page
-        </button>
       </div>
 
       {secondsLeft === 0 && !running && (
@@ -199,6 +198,26 @@ export function WritingPage() {
         />
         {result2 && <WritingResult kindLabel="Task 2" r={result2} />}
       </section>
+      <ScoreSummaryModal
+        open={showModal && Boolean(result1) && Boolean(result2)}
+        onClose={() => setShowModal(false)}
+        section="writing"
+        startedAt={startedAt}
+        endedAt={endedAt ?? modalEndedAt}
+        durationSec={durationSec}
+        results={
+          result1 && result2
+            ? {
+                task1Band: result1.estimatedOverallBand,
+                task2Band: result2.estimatedOverallBand,
+                overallBand: weightedWritingOverall(result1.estimatedOverallBand, result2.estimatedOverallBand),
+                task1WordCount: result1.wordCount,
+                task2WordCount: result2.wordCount,
+              }
+            : null
+        }
+        fallbackSave={saveToScores}
+      />
     </article>
   )
 }

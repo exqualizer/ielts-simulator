@@ -9,6 +9,7 @@ import { TestTimerBar } from '../components/TestTimerBar'
 import type { ListeningPart, ListeningQuestion } from '../types'
 import { listeningRawToBand } from '../lib/ieltsBand'
 import { saveListeningScore } from '../lib/scoreStore'
+import { ScoreSummaryModal } from '../components/ScoreSummaryModal'
 
 function normalize(s: string): string {
   return s.trim().toLowerCase()
@@ -40,7 +41,7 @@ export function ListeningPage() {
     return buildRandomListeningParts()
   }, [sessionKey])
 
-  const { secondsLeft, running, start, pause, reset } = useTestTimer({
+  const { secondsLeft, running, start, pause, reset, startedAt, endedAt, durationSec } = useTestTimer({
     initialSeconds: LISTENING_DURATION_SEC,
     onEnd: () => {
       setPlayedParts(new Set())
@@ -50,6 +51,8 @@ export function ListeningPage() {
   const [mcqChoice, setMcqChoice] = useState<Record<string, number | null>>({})
   const [showResults, setShowResults] = useState(false)
   const [playedParts, setPlayedParts] = useState<Set<number>>(() => new Set())
+  const [showModal, setShowModal] = useState(false)
+  const [modalEndedAt, setModalEndedAt] = useState<string | null>(null)
 
   const examActive = running && secondsLeft > 0
 
@@ -94,6 +97,8 @@ export function ListeningPage() {
     setGapValues({})
     setMcqChoice({})
     setShowResults(false)
+    setShowModal(false)
+    setModalEndedAt(null)
     setPlayedParts(new Set())
     reset()
   }
@@ -212,7 +217,18 @@ export function ListeningPage() {
         <button
           type="button"
           className="btn btn--primary"
-          onClick={() => setShowResults((s) => !s)}
+          onClick={() => {
+            setShowResults((s) => {
+              const next = !s
+              if (next) {
+                setModalEndedAt(new Date().toISOString())
+                setShowModal(true)
+              } else {
+                setShowModal(false)
+              }
+              return next
+            })
+          }}
         >
           {showResults ? 'Hide results' : 'Check answers'}
         </button>
@@ -221,12 +237,25 @@ export function ListeningPage() {
             Score: {score.correct} / {score.total}
           </p>
         )}
-        {score && (
-          <button type="button" className="btn" onClick={saveToScores}>
-            Save to Scores page
-          </button>
-        )}
       </div>
+      <ScoreSummaryModal
+        open={showModal && Boolean(score)}
+        onClose={() => setShowModal(false)}
+        section="listening"
+        startedAt={startedAt}
+        endedAt={endedAt ?? modalEndedAt}
+        durationSec={durationSec}
+        results={
+          score
+            ? {
+                correct: score.correct,
+                total: score.total,
+                estimatedBand: listeningRawToBand(score.correct),
+              }
+            : null
+        }
+        fallbackSave={saveToScores}
+      />
     </article>
   )
 }

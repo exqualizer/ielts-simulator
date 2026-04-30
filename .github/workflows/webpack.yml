@@ -26,14 +26,18 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
 
       - name: Install dependencies
+        working-directory: client
         run: npm ci
 
       - name: Build (GitHub Pages)
         env:
           # Ensure correct base path: /<repo-name>/
           VITE_PAGES_BASE: "/${{ github.event.repository.name }}/"
+        working-directory: client
         run: npm run build:pages
 
       - name: Upload Pages artifact

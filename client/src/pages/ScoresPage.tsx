@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { loadScores, type RawSectionScore, type SpeakingSessionScore, type WritingSectionScore } from '../lib/scoreStore'
 import { ACADEMIC_READING_TABLE, LISTENING_TABLE } from '../lib/ieltsBand'
+import { useAuth } from '../contexts/useAuth'
+import { apiFetch } from '../lib/api'
 
 const IELTS_BANDS: Array<{ band: string; label: string; note: string }> = [
   { band: '9', label: 'Expert user', note: 'Fully operational command; accurate, fluent and appropriate.' },
@@ -93,11 +95,93 @@ function WritingScore({ w }: { w: WritingSectionScore }) {
 }
 
 export function ScoresPage() {
-  const scores = useMemo(() => loadScores(), [])
-  const speaking = scores.speaking
-  const listening = scores.listening
-  const reading = scores.reading
-  const writing = scores.writing
+  const localScores = useMemo(() => loadScores(), [])
+  const { user } = useAuth()
+  const [remoteLatest, setRemoteLatest] = useState<Record<string, unknown> | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    apiFetch<{ latest: Record<string, unknown> }>('/api/sessions/latest')
+      .then((d) => setRemoteLatest(d.latest))
+      .catch(() => setRemoteLatest(null))
+  }, [user])
+
+  const getDoc = (k: string): { createdAt: string; results: unknown } | null => {
+    const v = remoteLatest?.[k]
+    if (!v || typeof v !== 'object') return null
+    const o = v as { createdAt?: unknown; results?: unknown }
+    if (typeof o.createdAt !== 'string') return null
+    return { createdAt: o.createdAt, results: o.results }
+  }
+
+  const numFrom = (obj: unknown, key: string, fallback: number) => {
+    if (!obj || typeof obj !== 'object') return fallback
+    const v = (obj as Record<string, unknown>)[key]
+    return typeof v === 'number' ? v : typeof v === 'string' && v.trim() ? Number(v) : fallback
+  }
+
+  const hasProp = (obj: unknown, key: string): boolean => {
+    return Boolean(obj && typeof obj === 'object' && key in (obj as Record<string, unknown>))
+  }
+
+  const speakingDoc = user ? getDoc('speaking') : null
+  const listeningDoc = user ? getDoc('listening') : null
+  const readingDoc = user ? getDoc('reading') : null
+  const writingDoc = user ? getDoc('writing') : null
+
+  const speaking: SpeakingSessionScore | undefined =
+    speakingDoc && speakingDoc.results && typeof speakingDoc.results === 'object'
+      ? (speakingDoc.results as SpeakingSessionScore)
+      : localScores.speaking
+
+  const listening: RawSectionScore | undefined =
+    listeningDoc && listeningDoc.results && typeof listeningDoc.results === 'object'
+    ? {
+        kind: 'listening',
+        createdAt: listeningDoc.createdAt,
+        correct: numFrom(listeningDoc.results, 'correct', 0),
+        total: numFrom(listeningDoc.results, 'total', 40),
+        estimatedBand: numFrom(listeningDoc.results, 'estimatedBand', 0),
+      }
+    : localScores.listening
+
+  const reading: RawSectionScore | undefined =
+    readingDoc && readingDoc.results && typeof readingDoc.results === 'object'
+    ? {
+        kind: 'reading',
+        createdAt: readingDoc.createdAt,
+        correct: numFrom(readingDoc.results, 'correct', 0),
+        total: numFrom(readingDoc.results, 'total', 40),
+        estimatedBand: numFrom(readingDoc.results, 'estimatedBand', 0),
+      }
+    : localScores.reading
+
+  const writing: WritingSectionScore | undefined =
+    writingDoc && writingDoc.results && typeof writingDoc.results === 'object'
+    ? {
+        kind: 'writing',
+        createdAt: writingDoc.createdAt,
+        overallEstimatedBand: numFrom(writingDoc.results, 'overallBand', 0),
+        task1: hasProp(writingDoc.results, 'task1Band')
+          ? {
+              kind: 'task1',
+              createdAt: writingDoc.createdAt,
+              estimatedBand: numFrom(writingDoc.results, 'task1Band', 0),
+              wordCount: numFrom(writingDoc.results, 'task1WordCount', 0),
+              criteria: [],
+            }
+          : undefined,
+        task2: hasProp(writingDoc.results, 'task2Band')
+          ? {
+              kind: 'task2',
+              createdAt: writingDoc.createdAt,
+              estimatedBand: numFrom(writingDoc.results, 'task2Band', 0),
+              wordCount: numFrom(writingDoc.results, 'task2WordCount', 0),
+              criteria: [],
+            }
+          : undefined,
+      }
+    : localScores.writing
 
   return (
     <article className="paper">
@@ -107,6 +191,11 @@ export function ScoresPage() {
           This page shows your most recently saved practice scores. IELTS bands
           are decided by trained examiners — these checkers are guidance only.
         </p>
+        {user && (
+          <p className="hint" style={{ marginTop: 0 }}>
+            Viewing scores for <strong>{user.email}</strong>
+          </p>
+        )}
       </header>
 
       <section className="panel">

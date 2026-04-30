@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TtsButton } from '../components/TtsButton'
 import { AudioRecorder, type RecordedAnswer } from '../components/AudioRecorder'
+import { ScoreSummaryModal } from '../components/ScoreSummaryModal'
 import {
   PART2_PREP_SEC,
   PART2_SPEAK_SEC,
@@ -47,6 +48,9 @@ export function SpeakingPage() {
   const [prepLeft, setPrepLeft] = useState(PART2_PREP_SEC)
   const [longLeft, setLongLeft] = useState(PART2_SPEAK_SEC)
   const [scores, setScores] = useState<Record<string, SpeakingQuestionScore>>({})
+  const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null)
+  const [sessionEndedAt, setSessionEndedAt] = useState<string | null>(null)
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     if (phase !== 'part2_prep' && phase !== 'part2_long') return
@@ -84,6 +88,9 @@ export function SpeakingPage() {
     setPrepLeft(PART2_PREP_SEC)
     setLongLeft(PART2_SPEAK_SEC)
     setScores({})
+    setSessionStartedAt(null)
+    setSessionEndedAt(null)
+    setShowModal(false)
   }
 
   function saveScore(id: string, label: string, rec: RecordedAnswer) {
@@ -114,6 +121,22 @@ export function SpeakingPage() {
     }
   }
 
+  const durationSec =
+    sessionStartedAt && (sessionEndedAt || phase === 'done')
+      ? Math.max(
+          0,
+          (new Date(sessionEndedAt ?? new Date().toISOString()).getTime() -
+            new Date(sessionStartedAt).getTime()) /
+            1000,
+        )
+      : 0
+
+  function startSession() {
+    setSessionStartedAt((p) => p ?? new Date().toISOString())
+    setSessionEndedAt(null)
+    setPhase('part1')
+  }
+
   return (
     <article className="paper paper--speaking">
       <header className="paper__head">
@@ -142,7 +165,7 @@ export function SpeakingPage() {
           <button
             type="button"
             className="btn btn--primary"
-            onClick={() => setPhase('part1')}
+            onClick={startSession}
           >
             Start Part 1
           </button>
@@ -286,7 +309,11 @@ export function SpeakingPage() {
           <button
             type="button"
             className="btn btn--primary"
-            onClick={() => setPhase('done')}
+            onClick={() => {
+              setSessionEndedAt(new Date().toISOString())
+              setShowModal(true)
+              setPhase('done')
+            }}
           >
             Finish session
           </button>
@@ -300,22 +327,6 @@ export function SpeakingPage() {
             Reset to draw a new random set of Part 1 topics, a new cue card, and
             new Part 3 questions.
           </p>
-          <div className="panel panel--accent">
-            <h3>Estimated speaking band (this session)</h3>
-            <p className="score">Overall: {buildSessionScore().overallBand.toFixed(1)}</p>
-            <p className="hint">
-              This is a practice estimate from your recordings. Use the Scores
-              page to see the full breakdown.
-            </p>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => saveSpeakingSessionScore(buildSessionScore())}
-              disabled={Object.keys(scores).length === 0}
-            >
-              Save to Scores page
-            </button>
-          </div>
           <button
             type="button"
             className="btn btn--primary"
@@ -325,6 +336,16 @@ export function SpeakingPage() {
           </button>
         </section>
       )}
+      <ScoreSummaryModal
+        open={showModal && phase === 'done'}
+        onClose={() => setShowModal(false)}
+        section="speaking"
+        startedAt={sessionStartedAt}
+        endedAt={sessionEndedAt}
+        durationSec={durationSec}
+        results={buildSessionScore()}
+        fallbackSave={() => saveSpeakingSessionScore(buildSessionScore())}
+      />
     </article>
   )
 }

@@ -11,9 +11,19 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     base,
+    server: isPages
+      ? undefined
+      : {
+          proxy: {
+            '/api': {
+              target: 'http://localhost:3001',
+              changeOrigin: true,
+            },
+          },
+        },
     build: {
       // GitHub Pages can serve from /docs on main branch (Jekyll-compatible)
-      outDir: 'docs',
+      outDir: '../docs',
       emptyOutDir: true,
     },
   }

@@ -13,6 +13,8 @@ export function useTestTimer({
 }: Options) {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds)
   const [running, setRunning] = useState(autoStart)
+  const [startedAt, setStartedAt] = useState<string | null>(autoStart ? new Date().toISOString() : null)
+  const [endedAt, setEndedAt] = useState<string | null>(null)
   const onEndRef = useRef(onEnd)
 
   useEffect(() => {
@@ -25,6 +27,7 @@ export function useTestTimer({
       setSecondsLeft((s) => {
         if (s <= 1) {
           setRunning(false)
+          setEndedAt(new Date().toISOString())
           queueMicrotask(() => onEndRef.current?.())
           return 0
         }
@@ -34,14 +37,22 @@ export function useTestTimer({
     return () => window.clearInterval(id)
   }, [running])
 
-  const start = useCallback(() => setRunning(true), [])
+  const start = useCallback(() => {
+    setStartedAt((prev) => prev ?? new Date().toISOString())
+    setEndedAt(null)
+    setRunning(true)
+  }, [])
   const pause = useCallback(() => setRunning(false), [])
   const reset = useCallback(() => {
     setRunning(false)
     setSecondsLeft(initialSeconds)
+    setStartedAt(null)
+    setEndedAt(null)
   }, [initialSeconds])
 
-  return { secondsLeft, running, start, pause, reset }
+  const durationSec = initialSeconds - secondsLeft
+
+  return { secondsLeft, running, start, pause, reset, startedAt, endedAt, durationSec, initialSeconds }
 }
 
 export function formatClock(totalSeconds: number): string {

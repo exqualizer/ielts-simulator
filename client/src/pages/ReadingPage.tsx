@@ -8,6 +8,7 @@ import { TestTimerBar } from '../components/TestTimerBar'
 import type { ReadingQuestion } from '../types'
 import { academicReadingRawToBand } from '../lib/ieltsBand'
 import { saveReadingScore } from '../lib/scoreStore'
+import { ScoreSummaryModal } from '../components/ScoreSummaryModal'
 
 export function ReadingPage() {
   const [sessionKey, setSessionKey] = useState(0)
@@ -21,12 +22,14 @@ export function ReadingPage() {
     [exam],
   )
 
-  const { secondsLeft, running, start, pause, reset } = useTestTimer({
+  const { secondsLeft, running, start, pause, reset, startedAt, endedAt, durationSec } = useTestTimer({
     initialSeconds: READING_DURATION_SEC,
   })
   const [tfng, setTfng] = useState<Record<string, string>>({})
   const [mcq, setMcq] = useState<Record<string, number | null>>({})
   const [showResults, setShowResults] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [modalEndedAt, setModalEndedAt] = useState<string | null>(null)
 
   const examActive = running && secondsLeft > 0
 
@@ -62,6 +65,8 @@ export function ReadingPage() {
     setTfng({})
     setMcq({})
     setShowResults(false)
+    setShowModal(false)
+    setModalEndedAt(null)
     reset()
   }
 
@@ -156,7 +161,18 @@ export function ReadingPage() {
         <button
           type="button"
           className="btn btn--primary"
-          onClick={() => setShowResults((s) => !s)}
+          onClick={() => {
+            setShowResults((s) => {
+              const next = !s
+              if (next) {
+                setModalEndedAt(new Date().toISOString())
+                setShowModal(true)
+              } else {
+                setShowModal(false)
+              }
+              return next
+            })
+          }}
         >
           {showResults ? 'Hide results' : 'Check answers'}
         </button>
@@ -165,12 +181,25 @@ export function ReadingPage() {
             Score: {score.correct} / {score.total}
           </p>
         )}
-        {score && (
-          <button type="button" className="btn" onClick={saveToScores}>
-            Save to Scores page
-          </button>
-        )}
       </div>
+      <ScoreSummaryModal
+        open={showModal && Boolean(score)}
+        onClose={() => setShowModal(false)}
+        section="reading"
+        startedAt={startedAt}
+        endedAt={endedAt ?? modalEndedAt}
+        durationSec={durationSec}
+        results={
+          score
+            ? {
+                correct: score.correct,
+                total: score.total,
+                estimatedBand: academicReadingRawToBand(score.correct),
+              }
+            : null
+        }
+        fallbackSave={saveToScores}
+      />
     </article>
   )
 }
