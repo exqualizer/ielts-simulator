@@ -31,7 +31,12 @@ jobs:
 
       - name: Install dependencies
         working-directory: client
-        run: npm ci
+        env:
+          # Work around npm optional-deps bug impacting native bindings (rollup/esbuild)
+          npm_config_optional: "true"
+        run: |
+          npm ci --include=optional --no-audit --no-fund
+          npm rebuild
 
       - name: Build (GitHub Pages)
         env:
