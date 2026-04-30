@@ -58,6 +58,37 @@ export type SpeakOptions = {
   voice?: SpeechSynthesisVoice | null
 }
 
+function pickEnglishVoices(max: number): SpeechSynthesisVoice[] {
+  const voices = loadVoices()
+  if (voices.length === 0 || max <= 0) return []
+
+  const en = voices.filter((v) => v.lang.toLowerCase().startsWith('en'))
+  const gb = en.filter((v) => v.lang.toLowerCase().startsWith('en-gb'))
+  const us = en.filter((v) => v.lang.toLowerCase().startsWith('en-us'))
+  const pool = [...gb, ...us, ...en, ...voices]
+
+  const out: SpeechSynthesisVoice[] = []
+  const seen = new Set<string>()
+  for (const v of pool) {
+    const key = `${v.name}::${v.lang}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(v)
+    if (out.length >= max) break
+  }
+  return out
+}
+
+function parseSpeakerPrefix(raw: string): { speaker: string | null; spokenText: string } {
+  const s = raw.trim()
+  const m = s.match(/^([A-Za-z][A-Za-z0-9 ]{0,20}):\s*(.+)$/)
+  if (!m) return { speaker: null, spokenText: s }
+  const speaker = m[1]?.trim() || null
+  const spokenText = (m[2] ?? '').trim()
+  if (!speaker || !spokenText) return { speaker: null, spokenText: s }
+  return { speaker, spokenText }
+}
+
 /**
  * Speak chunks one after another (like short recording segments).
  */
@@ -74,25 +105,47 @@ export function speakChunksSequential(
     stopSpeech()
     const rate = opts.rate ?? 0.92
     const pitch = opts.pitch ?? 1
-    const voice = opts.voice ?? pickEnglishVoice()
+    const fallbackVoice = opts.voice ?? pickEnglishVoice()
+
+    // If the chunks contain multiple speakers (e.g. "Staff:" / "Caller:"),
+    // automatically assign different voices per speaker.
+    const parsed = clean.map((c) => ({ raw: c, ...parseSpeakerPrefix(c) }))
+    const speakers = Array.from(
+      new Set(parsed.map((p) => p.speaker).filter((x): x is string => Boolean(x))),
+    )
+    const useMultiVoice = !opts.voice && speakers.length >= 2
+    const voicePool = useMultiVoice ? pickEnglishVoices(Math.min(4, speakers.length)) : []
+    const speakerToIdx = new Map<string, number>()
+    speakers.forEach((sp, idx) => speakerToIdx.set(sp, idx))
 
     window.requestAnimationFrame(() => {
       let i = 0
       const speakNext = () => {
-        if (i >= clean.length) {
+        if (i >= parsed.length) {
           resolve()
           return
         }
-        const u = new SpeechSynthesisUtterance(clean[i])
+        const cur = parsed[i]!
+        const u = new SpeechSynthesisUtterance(cur.spokenText)
         u.rate = rate
         u.pitch = pitch
-        if (voice) u.voice = voice
+        if (useMultiVoice && cur.speaker) {
+          const idx = speakerToIdx.get(cur.speaker) ?? 0
+          const v = voicePool[idx] ?? fallbackVoice
+          if (v) u.voice = v
+          // If we couldn't find different voices, vary pitch slightly.
+          if (!voicePool[idx] && speakers.length >= 2) {
+            u.pitch = 0.92 + (idx % 3) * 0.12
+          }
+        } else if (fallbackVoice) {
+          u.voice = fallbackVoice
+        }
         u.onend = () => {
           i += 1
           window.setTimeout(speakNext, 120)
         }
         u.onerror = () => {
-          i = clean.length
+          i = parsed.length
           resolve()
         }
         window.speechSynthesis.speak(u)
