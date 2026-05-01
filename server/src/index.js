@@ -9,7 +9,10 @@ import { sessionsRouter } from './routes/sessions.js'
 
 const PORT = Number(process.env.PORT || 3001)
 const MONGODB_URI = process.env.MONGODB_URI || ''
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173'
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
 
 if (!MONGODB_URI) {
   console.error('Missing MONGODB_URI in environment.')
@@ -18,12 +21,18 @@ if (!MONGODB_URI) {
 
 await mongoose.connect(MONGODB_URI)
 console.log('MongoDB connected.')
+console.log(`CORS allowed origins (${allowedOrigins.length}): ${allowedOrigins.join(', ')}`)
 
 const app = express()
 
 app.use(
   cors({
-    origin: CORS_ORIGIN.split(',').map((s) => s.trim()),
+    origin(origin, cb) {
+      if (!origin) return cb(null, true)
+      if (allowedOrigins.includes(origin)) return cb(null, true)
+      console.warn(`CORS blocked request from origin: ${origin}`)
+      return cb(null, false)
+    },
     credentials: true,
   }),
 )
