@@ -7,8 +7,7 @@ export default defineConfig(({ mode }) => {
   // For GitHub Pages project sites: https://<user>.github.io/<repo>/
   // If your repo name differs, set it via VITE_PAGES_BASE or adjust below.
   const base = isPages ? process.env.VITE_PAGES_BASE ?? '/ielts-simulator/' : '/'
-  const pagesApiBase =
-    process.env.VITE_API_BASE_URL ?? 'https://ielts-simulator-api.onrender.com'
+  const pagesApiBase = process.env.VITE_API_BASE_URL;
 
   return {
     plugins: [react()],
@@ -24,7 +23,7 @@ export default defineConfig(({ mode }) => {
       : {
           proxy: {
             '/api': {
-              target: 'http://localhost:3001',
+              target: process.env.VITE_API_BASE_URL,
               changeOrigin: true,
             },
           },
