@@ -7,7 +7,10 @@ export default defineConfig(({ mode }) => {
   // For GitHub Pages project sites: https://<user>.github.io/<repo>/
   // If your repo name differs, set it via VITE_PAGES_BASE or adjust below.
   const base = isPages ? process.env.VITE_PAGES_BASE ?? '/ielts-simulator/' : '/'
-  const pagesApiBase = process.env.VITE_API_BASE_URL;
+  // Empty string is common from .env / CI; `??` would not fall back and relative /api hits static Pages (405 on POST).
+  const pagesApiBase =
+    (process.env.VITE_API_BASE_URL || '').trim() ||
+    'https://ielts-simulator-api-887393880271.australia-southeast1.run.app'
 
   return {
     plugins: [react()],
@@ -23,7 +26,7 @@ export default defineConfig(({ mode }) => {
       : {
           proxy: {
             '/api': {
-              target: process.env.VITE_API_BASE_URL,
+              target: 'http://localhost:3001',
               changeOrigin: true,
             },
           },

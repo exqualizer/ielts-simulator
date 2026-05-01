@@ -47,6 +47,8 @@ jobs:
         env:
           # Ensure correct base path: /<repo-name>/
           VITE_PAGES_BASE: "/${{ github.event.repository.name }}/"
+          # Must be absolute; relative /api would call GitHub Pages (static) → 405 on POST.
+          VITE_API_BASE_URL: "https://ielts-simulator-api.onrender.com"
         working-directory: client
         run: npm run build:pages
 
