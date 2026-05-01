@@ -37,6 +37,17 @@ console.log(`CORS allowed origins (${allowedOrigins.length}): ${allowedOrigins.j
 const app = express()
 app.set('trust proxy', 1)
 
+/** Explicit CORS headers (with credentials, origin cannot be *). Runs before `cors` as a clear contract for proxies. */
+app.use((req, res, next) => {
+  const origin = req.get('Origin')
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
+    res.setHeader('Vary', 'Origin')
+  }
+  next()
+})
+
 app.use(
   cors({
     origin(origin, cb) {
