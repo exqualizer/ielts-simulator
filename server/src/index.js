@@ -9,10 +9,21 @@ import { sessionsRouter } from './routes/sessions.js'
 
 const PORT = Number(process.env.PORT || 3001)
 const MONGODB_URI = process.env.MONGODB_URI || ''
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean)
+
+function collectAllowedOrigins() {
+  const set = new Set(
+    (process.env.CORS_ORIGIN || 'http://localhost:5173')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+  )
+  // GitHub Pages sends Origin as https://<owner>.github.io (no repo path). Optional shortcut for Cloud Run.
+  const ghOwner = (process.env.CORS_GITHUB_OWNER || '').trim()
+  if (ghOwner) set.add(`https://${ghOwner}.github.io`)
+  return [...set]
+}
+
+const allowedOrigins = collectAllowedOrigins()
 
 if (!MONGODB_URI) {
   console.error('Missing MONGODB_URI in environment.')
@@ -24,6 +35,7 @@ console.log('MongoDB connected.')
 console.log(`CORS allowed origins (${allowedOrigins.length}): ${allowedOrigins.join(', ')}`)
 
 const app = express()
+app.set('trust proxy', 1)
 
 app.use(
   cors({
