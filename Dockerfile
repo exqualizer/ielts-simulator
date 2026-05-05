@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Install deps first for better layer caching
 COPY client/package.json client/package-lock.json* ./client/
-RUN cd client && npm ci
+RUN cd client && if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
 
 # Copy source and build
 COPY client ./client
