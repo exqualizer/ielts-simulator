@@ -9,9 +9,6 @@ const p3Body = `Microplastics enter rivers and lakes through wastewater, tyre du
 
 const p4Body = `In many countries, public libraries have expanded far beyond book lending. Some run “makerspaces” with 3D printers, sewing machines, and basic electronics kits, aiming to reduce barriers to learning technical skills. Others host legal clinics, language exchanges, and job-search workshops. Supporters argue that these services increase the library’s relevance in a digital economy, particularly for people who lack home internet or quiet study space. Critics worry that expanding responsibilities can dilute core services if funding does not rise accordingly. Librarians also report that staff training must adapt: facilitating community programs requires different skills than cataloguing and circulation. Evidence from pilot programs suggests that when new services are co-designed with local residents, participation is higher and resources are used more efficiently.`
 
-const p5Body = `Renewable electricity from wind and solar has become cheaper in many regions, yet matching supply with demand remains a challenge. Energy storage can help, but the most cost-effective approach depends on context. Short-duration batteries are well suited to smoothing hourly fluctuations, whereas pumped hydro can store energy for longer periods but requires specific geography. Another strategy is demand response: instead of generating more power, utilities encourage consumers to shift usage to times when electricity is abundant, for example by running industrial processes overnight or charging electric vehicles at midday. While demand response can reduce peak load, it raises questions about fairness, since not all households can easily change their routines. Policymakers therefore debate whether incentives should target large commercial users first or include broader subsidies for smart appliances.`
-
-const p6Body = `Archaeologists increasingly use remote sensing to locate sites without excavation. Techniques include aerial photography, ground-penetrating radar, and LiDAR, which can reveal subtle changes in vegetation or terrain that indicate buried structures. LiDAR is particularly useful in forested regions because it can penetrate gaps in the canopy and produce detailed elevation models. However, data processing is complex and requires careful interpretation: natural features can mimic human-built patterns. Moreover, remote sensing does not replace excavation entirely, because artefacts and stratigraphy are needed to date a site and understand how it was used. Many projects therefore follow a staged approach, using remote sensing to narrow down promising areas before targeted digs. This can reduce costs and limit damage to fragile locations.`
 
 function tfng(
   statement: string,
@@ -28,7 +25,11 @@ function mcq(
   return { id: '_', kind: 'mcq', prompt, options, answer }
 }
 
-/** Passage 1: 13 questions */
+function gap(prompt: string, accepted: string[]): ReadingQuestion {
+  return { id: '_', kind: 'gap', prompt, blanks: [accepted] }
+}
+
+/** Passage 1: 10 questions */
 const SEC1: ReadingQuestion[] = [
   tfng(
     'Urban green space has no measurable effect on air quality in cities.',
@@ -67,211 +68,125 @@ const SEC1: ReadingQuestion[] = [
     'Mental health is listed as a possible benefit of urban greenery.',
     'TRUE',
   ),
-  tfng(
-    'The passage claims maintenance costs are irrelevant.',
-    'FALSE',
-  ),
-  tfng(
-    'Green corridors always replace buses in cities.',
-    'NOT GIVEN',
-  ),
+  gap('One challenge mentioned is maintenance _____.', ['costs', 'maintenance costs']),
   mcq(
     'Unequal access to green space is described as:',
     ['Solved everywhere', 'A persistent challenge', 'A myth'],
     1,
   ),
-  tfng(
-    'Research compares small distributed patches with one large peripheral park.',
-    'TRUE',
-  ),
-  mcq(
-    '“Gentrification” in the passage is linked to greening when:',
-    [
-      'Housing policies protect residents',
-      'Housing protections are absent',
-      'Parks are closed',
-    ],
-    1,
-  ),
 ]
 
-/** Passage 2: 14 questions */
+/** Passage 2: 10 questions */
 const SEC2: ReadingQuestion[] = [
-  tfng(
-    'The passage claims that all employees strongly prefer working from home.',
-    'FALSE',
-  ),
-  tfng(
-    'Some companies hold periodic in-person sessions for intensive collaboration.',
-    'TRUE',
-  ),
-  tfng(
-    'The text states that keystroke monitoring is the most successful performance measure.',
-    'FALSE',
+  mcq(
+    'What kind of tasks are said to keep stable productivity under remote or hybrid schedules?',
+    [
+      'Routine tasks',
+      'Only creative brainstorming',
+      'Manual factory work',
+    ],
+    0,
   ),
   mcq(
-    'According to the passage, which group may gain most from occasional in-person contact?',
+    'Creative collaboration is described as more sensitive to:',
     [
-      'Senior specialists who prefer solitary work',
-      'Junior staff needing mentoring',
-      'Only customers outside the organisation',
+      'The medium used to communicate',
+      'The colour of office walls',
+      'The length of lunch breaks',
     ],
-    1,
-  ),
-  tfng(
-    'Creative collaboration is described as unaffected by remote communication tools.',
-    'FALSE',
-  ),
-  tfng(
-    'Routine tasks are said to show stable productivity under remote or hybrid schedules.',
-    'TRUE',
-  ),
-  tfng(
-    'Video calls are credited with making spontaneous brainstorming easier.',
-    'FALSE',
-  ),
-  mcq(
-    'Successful programmes are said to favour:',
-    [
-      'Keystroke monitoring only',
-      'Trust-based metrics and availability norms',
-      'Removing all meetings',
-    ],
-    1,
-  ),
-  tfng(
-    'Senior specialists never work from home.',
-    'FALSE',
-  ),
-  tfng(
-    '“Design weeks” are mentioned as quarterly in-person events.',
-    'TRUE',
-  ),
-  tfng(
-    'Technology and media sectors are explicitly referenced in surveys.',
-    'TRUE',
+    0,
   ),
   mcq(
     'Packed calendars with video calls are linked to difficulty replicating:',
     ['Payroll tasks', 'Spontaneous brainstorming', 'Email'], 1,
   ),
-  tfng(
-    'The author argues one hybrid policy suits every industry.',
-    'FALSE',
-  ),
   mcq(
-    'Day-to-day work is described for some firms as:',
-    ['Fully office-based', 'Flexible', 'Illegal'], 1,
-  ),
-]
-
-/** Passage 3: 13 questions */
-const SEC3: ReadingQuestion[] = [
-  tfng(
-    'Microplastics can only enter freshwater through direct littering by tourists.',
-    'FALSE',
-  ),
-  tfng(
-    'Field studies always show clearer effects than laboratory experiments.',
-    'FALSE',
-  ),
-  tfng(
-    'The passage mentions extended producer fees related to synthetic textiles.',
-    'TRUE',
-  ),
-  mcq(
-    'Scaling filtration for whole catchments is described as:',
-    ['Trivial', 'Costly', 'Unnecessary'],
-    1,
-  ),
-  tfng(
-    'Invertebrates may ingest particles in the water column.',
-    'TRUE',
-  ),
-  tfng(
-    'Tyre dust is listed as a source of microplastics.',
-    'TRUE',
-  ),
-  tfng(
-    'Field studies never vary with the season.',
-    'FALSE',
-  ),
-  mcq(
-    'Policy debates are said to centre on:',
-    [
-      'Only tourism tax',
-      'Producer responsibility versus consumer behaviour',
-      'Space travel',
-    ],
-    1,
-  ),
-  tfng(
-    'Laboratory experiments never show effects on feeding rates.',
-    'FALSE',
-  ),
-  tfng(
-    'European jurisdictions are testing extended producer fees.',
-    'TRUE',
-  ),
-  mcq(
-    'Degraded packaging is presented as:',
-    ['A source of microplastics', 'A solution', 'Unrelated'],
+    'Some firms organise quarterly in-person events called:',
+    ['Design weeks', 'Hiring days', 'Budget weeks'],
     0,
   ),
-  tfng(
-    'Food webs are mentioned in connection with ingestion.',
-    'TRUE',
+  gap('Some firms keep day-to-day work _____.', ['flexible']),
+  mcq(
+    'Which group is said to benefit most from occasional face-to-face mentoring?',
+    ['Junior staff', 'Retired workers', 'Only managers'],
+    0,
   ),
+  mcq(
+    'Which sectors are explicitly referenced in the surveys mentioned?',
+    ['Technology and media', 'Agriculture and mining', 'Tourism only'],
+    0,
+  ),
+  mcq(
+    'The most successful programmes tend to use:',
+    ['Trust-based performance metrics', 'Keystroke monitoring', 'No performance measures'],
+    0,
+  ),
+  mcq(
+    'The passage suggests there is:',
+    ['No single policy that fits every industry', 'One policy that fits everyone', 'A legal ban on hybrid work'],
+    0,
+  ),
+  gap('The passage mentions explicit norms for _____.', ['availability']),
 ]
 
-/** New exam passages/questions (40 total: 13 + 14 + 13) */
+/** Passage 3: 10 questions */
+const SEC3: ReadingQuestion[] = [
+  gap('One source of microplastics mentioned is tyre _____.', ['dust']),
+  mcq(
+    'Microplastics can enter rivers and lakes through:',
+    ['Wastewater, tyre dust, and degraded packaging', 'Only volcanic eruptions', 'Only fishing boats'],
+    0,
+  ),
+  mcq(
+    'Once in the water column, particles may be ingested by:',
+    [
+      'Invertebrates',
+      'Birds only',
+      'Plants only',
+    ],
+    0,
+  ),
+  mcq(
+    'Laboratory experiments suggest that high concentrations can reduce:',
+    ['Feeding rates in some species', 'Wind speed', 'Library memberships'],
+    0,
+  ),
+  mcq(
+    'Field studies sometimes produce mixed results because:',
+    ['Background pollution varies seasonally', 'Laboratory equipment is unavailable', 'Microplastics dissolve instantly'],
+    0,
+  ),
+  gap('Filtration technologies exist, but they are _____ to scale.', ['costly']),
+  mcq(
+    'Policy debates often centre on:',
+    ['Producer responsibility versus consumer behaviour change', 'Space travel funding', 'Sports advertising'],
+    0,
+  ),
+  mcq(
+    'Several European jurisdictions are testing:',
+    ['Extended producer fees for synthetic textiles', 'A ban on rivers', 'Free bottled water'],
+    0,
+  ),
+  mcq(
+    'Microplastics can move up:',
+    ['Food webs', 'Mountains', 'Telephone networks'],
+    0,
+  ),
+  gap('One entry route mentioned is degraded _____.', ['packaging']),
+]
+
+/** Passage 4 questions */
 const SEC4: ReadingQuestion[] = [
-  tfng('Public libraries in the passage are described as providing only book lending.', 'FALSE'),
-  tfng('Some libraries run makerspaces with tools like 3D printers.', 'TRUE'),
-  tfng('The passage claims expanded services always reduce costs for libraries.', 'NOT GIVEN'),
-  mcq('Supporters believe expanded library services help especially:', ['People without home internet', 'Only professional authors', 'Tourists'], 0),
-  tfng('Critics worry core services may suffer if funding does not increase.', 'TRUE'),
-  tfng('Library staff training is said to require new skills for community programs.', 'TRUE'),
-  mcq('Participation tends to be higher when services are:', ['Co-designed with residents', 'Copied from other cities without changes', 'Limited to weekends'], 0),
-  tfng('The passage states that cataloguing skills are identical to program facilitation skills.', 'FALSE'),
-  tfng('Job-search workshops are mentioned as one example of new services.', 'TRUE'),
-  mcq('The word “relevance” in the passage is linked to:', ['Digital economy changes', 'Sports events', 'Weather'], 0),
-  tfng('The passage says libraries should stop offering quiet study space.', 'FALSE'),
-  mcq('A “makerspace” is most closely associated with:', ['Hands-on learning tools', 'Medical surgery', 'Road construction'], 0),
-  tfng('Pilot programs suggest co-design can improve efficiency of resource use.', 'TRUE'),
-]
-
-const SEC5: ReadingQuestion[] = [
-  tfng('The passage claims wind and solar are always expensive everywhere.', 'FALSE'),
-  tfng('Short-duration batteries can help smooth hourly fluctuations.', 'TRUE'),
-  tfng('Pumped hydro works in any location regardless of geography.', 'FALSE'),
-  mcq('Demand response focuses on:', ['Generating more power', 'Shifting electricity use timing', 'Stopping renewable energy'], 1),
-  tfng('Charging electric vehicles at midday is given as an example of shifting demand.', 'TRUE'),
-  mcq('A fairness concern is that:', ['All households can easily shift routines', 'Not all households can shift routines', 'Demand response is illegal'], 1),
-  tfng('The passage states demand response always increases peak load.', 'FALSE'),
-  mcq('Policymakers debate whether incentives should target:', ['Only tourists', 'Large commercial users first or broader subsidies', 'Only children'], 1),
-  tfng('Energy storage is described as the only possible solution.', 'FALSE'),
-  tfng('Batteries are described as suited to long seasonal storage.', 'FALSE'),
-  mcq('The most cost-effective approach depends on:', ['Context', 'Luck', 'A single global rule'], 0),
-  tfng('Smart appliances are mentioned in connection with subsidies.', 'TRUE'),
-  tfng('Demand response can reduce peak load.', 'TRUE'),
-  mcq('Pumped hydro is associated with:', ['Longer-duration storage', 'No storage at all', 'Only coal plants'], 0),
-]
-
-const SEC6: ReadingQuestion[] = [
-  tfng('Remote sensing can help locate sites without excavation.', 'TRUE'),
-  tfng('LiDAR is said to be useful in forested regions.', 'TRUE'),
-  tfng('Remote sensing completely replaces excavation, according to the passage.', 'FALSE'),
-  mcq('One challenge of remote sensing is that:', ['Data processing is simple', 'Natural features can mimic patterns', 'It cannot be used from the air'], 1),
-  tfng('Artefacts and stratigraphy are needed to date a site.', 'TRUE'),
-  mcq('Projects often use a staged approach to:', ['Increase damage to sites', 'Narrow down promising areas first', 'Avoid all interpretation'], 1),
-  tfng('Ground-penetrating radar is listed as one remote sensing technique.', 'TRUE'),
-  tfng('LiDAR cannot penetrate gaps in a forest canopy.', 'FALSE'),
-  mcq('Remote sensing helps reduce:', ['Costs and damage', 'Rainfall', 'Language barriers'], 0),
-  tfng('The passage warns that interpretation must be careful.', 'TRUE'),
-  mcq('Aerial photography may reveal:', ['Vegetation or terrain changes', 'Only underwater fish', 'Bank interest rates'], 0),
-  tfng('Remote sensing provides detailed elevation models in some cases.', 'TRUE'),
-  mcq('Targeted digs happen:', ['Before any sensing', 'After narrowing areas', 'Never'], 1),
+  gap('Some libraries host job-search _____.', ['workshops', 'workshop']),
+  mcq('Public libraries are described as expanding beyond:', ['Book lending', 'Road repairs', 'Air travel'], 0),
+  mcq('A “makerspace” may include:', ['3D printers and electronics kits', 'Only swimming pools', 'Medical scanners'], 0),
+  mcq('Supporters argue expanded services increase the library’s relevance in:', ['A digital economy', 'A farming economy', 'A space economy'], 0),
+  mcq('Expanded services help especially people who lack:', ['Home internet or quiet study space', 'A driving licence', 'A passport'], 0),
+  mcq('One criticism is that expansion can dilute core services if:', ['Funding does not rise', 'Books become heavier', 'Staff stop reading'], 0),
+  mcq('Staff training must adapt because facilitating programs requires:', ['Different skills than cataloguing', 'No skills at all', 'Only accounting skills'], 0),
+  mcq('Evidence from pilot programs suggests participation is higher when services are:', ['Co-designed with residents', 'Hidden online', 'Limited to staff only'], 0),
+  gap('Libraries may run community programs such as language _____.', ['exchanges', 'exchange']),
+  mcq('Besides makerspaces, libraries may host:', ['Legal clinics', 'Car races', 'Airports'], 0),
 ]
 
 function flattenWithGlobalIds(exam: ReadingExam): ReadingExam {
@@ -280,7 +195,7 @@ function flattenWithGlobalIds(exam: ReadingExam): ReadingExam {
     sections: exam.sections.map((s) => ({
       ...s,
       questions: s.questions.map((q) => {
-        const id = `R-${n}`
+        const id = `R-${n + 1}`
         n += 1
         return { ...q, id }
       }),
@@ -302,19 +217,26 @@ const EXAM_A: ReadingExam = flattenWithGlobalIds({
       passage: { title: 'Microplastics in freshwater systems', body: p3Body },
       questions: SEC3,
     },
+    {
+      passage: { title: 'Libraries as community hubs', body: p4Body },
+      questions: SEC4,
+    },
   ],
 })
 
-/** Second exam: same passages, reordered (still 40 questions, authentic practice). */
 const EXAM_B: ReadingExam = flattenWithGlobalIds({
   sections: [
+    {
+      passage: { title: 'The growth of urban green space', body: p1Body },
+      questions: SEC1,
+    },
     {
       passage: { title: 'Microplastics in freshwater systems', body: p3Body },
       questions: SEC3,
     },
     {
-      passage: { title: 'The growth of urban green space', body: p1Body },
-      questions: SEC1,
+      passage: { title: 'Libraries as community hubs', body: p4Body },
+      questions: SEC4,
     },
     {
       passage: { title: 'Remote work and team creativity', body: p2Body },
@@ -323,23 +245,7 @@ const EXAM_B: ReadingExam = flattenWithGlobalIds({
   ],
 })
 
-const EXAM_C: ReadingExam = flattenWithGlobalIds({
-  sections: [
-    { passage: { title: 'Libraries as community hubs', body: p4Body }, questions: SEC4 },
-    { passage: { title: 'Balancing the electricity grid', body: p5Body }, questions: SEC5 },
-    { passage: { title: 'Remote sensing in archaeology', body: p6Body }, questions: SEC6 },
-  ],
-})
-
-const EXAM_D: ReadingExam = flattenWithGlobalIds({
-  sections: [
-    { passage: { title: 'Remote sensing in archaeology', body: p6Body }, questions: SEC6 },
-    { passage: { title: 'Libraries as community hubs', body: p4Body }, questions: SEC4 },
-    { passage: { title: 'Balancing the electricity grid', body: p5Body }, questions: SEC5 },
-  ],
-})
-
-const ALL_READING_EXAMS: ReadingExam[] = [EXAM_A, EXAM_B, EXAM_C, EXAM_D]
+const ALL_READING_EXAMS: ReadingExam[] = [EXAM_A, EXAM_B]
 
 export function buildRandomReadingExam(): ReadingExam {
   return pickOne(ALL_READING_EXAMS)

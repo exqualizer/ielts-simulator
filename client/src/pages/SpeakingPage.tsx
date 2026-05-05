@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TtsButton } from '../components/TtsButton'
 import { AudioRecorder, type RecordedAnswer } from '../components/AudioRecorder'
-import { ScoreSummaryModal } from '../components/ScoreSummaryModal'
+import { apiFetch } from '../lib/api'
+import { useAuth } from '../contexts/useAuth'
 import {
   PART2_PREP_SEC,
   PART2_SPEAK_SEC,
@@ -10,7 +11,6 @@ import {
 import { formatClock } from '../hooks/useTestTimer'
 import { checkSpeaking } from '../lib/speakingChecker'
 import {
-  saveSpeakingSessionScore,
   type SpeakingQuestionScore,
   type SpeakingSessionScore,
 } from '../lib/scoreStore'
@@ -38,6 +38,7 @@ function part2CueOnlyChunks(prompt: string, bullets: string[]): string[] {
 }
 
 export function SpeakingPage() {
+  const { user } = useAuth()
   const [sessionKey, setSessionKey] = useState(0)
   const session = useMemo(() => {
     void sessionKey
@@ -50,7 +51,8 @@ export function SpeakingPage() {
   const [scores, setScores] = useState<Record<string, SpeakingQuestionScore>>({})
   const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null)
   const [sessionEndedAt, setSessionEndedAt] = useState<string | null>(null)
-  const [showModal, setShowModal] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null)
 
   useEffect(() => {
     if (phase !== 'part2_prep' && phase !== 'part2_long') return
@@ -90,7 +92,8 @@ export function SpeakingPage() {
     setScores({})
     setSessionStartedAt(null)
     setSessionEndedAt(null)
-    setShowModal(false)
+    setSubmitting(false)
+    setSubmitStatus(null)
   }
 
   function saveScore(id: string, label: string, rec: RecordedAnswer) {
@@ -134,7 +137,47 @@ export function SpeakingPage() {
   function startSession() {
     setSessionStartedAt((p) => p ?? new Date().toISOString())
     setSessionEndedAt(null)
+    setSubmitStatus(null)
     setPhase('part1')
+  }
+
+  async function completeTest() {
+    setSubmitStatus(null)
+    if (!user) {
+      setSubmitStatus('Please login to save your result. Then view it on the Scores page.')
+      return
+    }
+    if (!sessionStartedAt) {
+      setSubmitStatus('Start the session first so time can be recorded.')
+      return
+    }
+    if (!sessionEndedAt) {
+      setSubmitStatus('Finish the session first.')
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await apiFetch('/api/sessions', {
+        method: 'POST',
+        json: {
+          section: 'speaking',
+          startedAt: sessionStartedAt,
+          endedAt: sessionEndedAt,
+          durationSec,
+          results: buildSessionScore(),
+        },
+      })
+      setSubmitStatus('Completed. View your saved score on the Scores page.')
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === 'object' && 'message' in e
+          ? String((e as { message?: unknown }).message ?? 'Failed to save.')
+          : 'Failed to save.'
+      setSubmitStatus(msg)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -311,7 +354,6 @@ export function SpeakingPage() {
             className="btn btn--primary"
             onClick={() => {
               setSessionEndedAt(new Date().toISOString())
-              setShowModal(true)
               setPhase('done')
             }}
           >
@@ -327,25 +369,31 @@ export function SpeakingPage() {
             Reset to draw a new random set of Part 1 topics, a new cue card, and
             new Part 3 questions.
           </p>
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={resetSimulator}
-          >
-            New random speaking set
-          </button>
+          <div className="actions-row">
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => void completeTest()}
+              disabled={submitting}
+            >
+              {submitting ? 'Completing…' : 'Complete test'}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={resetSimulator}
+              disabled={submitting}
+            >
+              New random speaking set
+            </button>
+          </div>
+          {submitStatus && (
+            <p className="banner banner--warn" role="status">
+              {submitStatus}
+            </p>
+          )}
         </section>
       )}
-      <ScoreSummaryModal
-        open={showModal && phase === 'done'}
-        onClose={() => setShowModal(false)}
-        section="speaking"
-        startedAt={sessionStartedAt}
-        endedAt={sessionEndedAt}
-        durationSec={durationSec}
-        results={buildSessionScore()}
-        fallbackSave={() => saveSpeakingSessionScore(buildSessionScore())}
-      />
     </article>
   )
 }

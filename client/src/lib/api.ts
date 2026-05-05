@@ -14,10 +14,15 @@ export async function apiFetch<T>(
   const headers = new Headers(opts.headers)
   if (opts.json !== undefined) {
     headers.set('content-type', 'application/json')
+    headers.set('accept', 'application/json')
+    headers.set('originreferer', window.location.href)
+    headers.set('Authorization', 'Bearer ' + localStorage.getItem('token'))
+    headers.set('Access-Control-Allow-Origin', '*')
   }
 
   const res = await fetch(withBase(path), {
     ...opts,
+    referrer: window.location.href,
     headers,
     credentials: 'include',
     body: opts.json !== undefined ? JSON.stringify(opts.json) : opts.body,

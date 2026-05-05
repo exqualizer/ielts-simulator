@@ -8,6 +8,8 @@ const TestSessionSchema = new mongoose.Schema(
     endedAt: { type: Date, required: true },
     durationSec: { type: Number, required: true },
     results: { type: mongoose.Schema.Types.Mixed, required: true },
+    /** Updated whenever the user clicks "Save score" for this section. */
+    savedAt: { type: Date, required: true, default: Date.now, index: true },
   },
   { timestamps: true },
 )

@@ -26,7 +26,7 @@ export type ReadingExamSection = {
   questions: ReadingQuestion[]
 }
 
-/** Three passages, 40 questions total (IELTS Academic Reading). */
+/** Four passages, 40 questions total (IELTS Academic Reading). */
 export type ReadingExam = {
   sections: ReadingExamSection[]
 }
@@ -44,3 +44,10 @@ export type ReadingQuestion =
       answer: 'TRUE' | 'FALSE' | 'NOT GIVEN'
     }
   | { id: string; kind: 'mcq'; prompt: string; options: string[]; answer: number }
+  | {
+      id: string
+      kind: 'gap'
+      prompt: string
+      /** One accepted-answer list per blank (match any, case-insensitive) */
+      blanks: string[][]
+    }

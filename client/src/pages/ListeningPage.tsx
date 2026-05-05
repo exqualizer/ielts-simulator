@@ -8,8 +8,8 @@ import { useTestTimer } from '../hooks/useTestTimer'
 import { TestTimerBar } from '../components/TestTimerBar'
 import type { ListeningPart, ListeningQuestion } from '../types'
 import { listeningRawToBand } from '../lib/ieltsBand'
-import { saveListeningScore } from '../lib/scoreStore'
-import { ScoreSummaryModal } from '../components/ScoreSummaryModal'
+import { apiFetch } from '../lib/api'
+import { useAuth } from '../contexts/useAuth'
 
 function normalize(s: string): string {
   return s.trim().toLowerCase()
@@ -35,6 +35,7 @@ function chunksForPart(part: ListeningPart): string[] {
 }
 
 export function ListeningPage() {
+  const { user } = useAuth()
   const [sessionKey, setSessionKey] = useState(0)
   const listeningParts = useMemo(() => {
     void sessionKey
@@ -49,10 +50,9 @@ export function ListeningPage() {
   })
   const [gapValues, setGapValues] = useState<Record<string, string[]>>({})
   const [mcqChoice, setMcqChoice] = useState<Record<string, number | null>>({})
-  const [showResults, setShowResults] = useState(false)
   const [playedParts, setPlayedParts] = useState<Set<number>>(() => new Set())
-  const [showModal, setShowModal] = useState(false)
-  const [modalEndedAt, setModalEndedAt] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null)
 
   const examActive = running && secondsLeft > 0
 
@@ -62,7 +62,6 @@ export function ListeningPage() {
   )
 
   const score = useMemo(() => {
-    if (!showResults) return null
     let correct = 0
     let total = 0
     for (const q of allQuestions) {
@@ -78,29 +77,56 @@ export function ListeningPage() {
       }
     }
     return { correct, total }
-  }, [allQuestions, gapValues, mcqChoice, showResults])
-
-  function saveToScores() {
-    if (!score) return
-    saveListeningScore({
-      kind: 'listening',
-      createdAt: new Date().toISOString(),
-      correct: score.correct,
-      total: score.total,
-      estimatedBand: listeningRawToBand(score.correct),
-    })
-  }
+  }, [allQuestions, gapValues, mcqChoice])
 
   function newRandomTest() {
     if (examActive) return
     setSessionKey((k) => k + 1)
     setGapValues({})
     setMcqChoice({})
-    setShowResults(false)
-    setShowModal(false)
-    setModalEndedAt(null)
+    setSubmitting(false)
+    setSubmitStatus(null)
     setPlayedParts(new Set())
     reset()
+  }
+
+  async function completeTest() {
+    setSubmitStatus(null)
+    if (!user) {
+      setSubmitStatus('Please login to save your result. Then view it on the Scores page.')
+      return
+    }
+    if (!startedAt) {
+      setSubmitStatus('Start the test first so time can be recorded.')
+      return
+    }
+    setSubmitting(true)
+    try {
+      const results = {
+        correct: score.correct,
+        total: score.total,
+        estimatedBand: listeningRawToBand(score.correct),
+      }
+      await apiFetch('/api/sessions', {
+        method: 'POST',
+        json: {
+          section: 'listening',
+          startedAt,
+          endedAt: endedAt ?? new Date().toISOString(),
+          durationSec,
+          results,
+        },
+      })
+      setSubmitStatus('Completed. View your saved score on the Scores page.')
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === 'object' && 'message' in e
+          ? String((e as { message?: unknown }).message ?? 'Failed to save.')
+          : 'Failed to save.'
+      setSubmitStatus(msg)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -149,8 +175,7 @@ export function ListeningPage() {
         <p className="hint">
           {examActive
             ? 'Test in progress: each recording plays once only; timer cannot be paused.'
-            : 'Start the test to begin timing. After time is up, you may replay recordings to review.'}{' '}
-          Model answers appear only when you use Check answers.
+            : 'Start the test to begin timing. After time is up, you may replay recordings to review.'}
         </p>
         {listeningParts.map((part, partIndex) => {
           const qStart =
@@ -188,7 +213,7 @@ export function ListeningPage() {
                       onChange={(i) =>
                         setMcqChoice((m) => ({ ...m, [q.id]: i }))
                       }
-                      show={showResults}
+                      show={false}
                     />
                   ) : (
                     <GapBlock
@@ -202,7 +227,7 @@ export function ListeningPage() {
                           return { ...g, [q.id]: next }
                         })
                       }}
-                      show={showResults}
+                      show={false}
                     />
                   )}
                 </li>
@@ -217,45 +242,20 @@ export function ListeningPage() {
         <button
           type="button"
           className="btn btn--primary"
-          onClick={() => {
-            setShowResults((s) => {
-              const next = !s
-              if (next) {
-                setModalEndedAt(new Date().toISOString())
-                setShowModal(true)
-              } else {
-                setShowModal(false)
-              }
-              return next
-            })
-          }}
+          onClick={() => void completeTest()}
+          disabled={submitting}
         >
-          {showResults ? 'Hide results' : 'Check answers'}
+          {submitting ? 'Completing…' : 'Complete test'}
         </button>
-        {score && (
-          <p className="score" role="status">
-            Score: {score.correct} / {score.total}
-          </p>
-        )}
+        <p className="score" role="status">
+          Progress: {score.correct} / {score.total}
+        </p>
       </div>
-      <ScoreSummaryModal
-        open={showModal && Boolean(score)}
-        onClose={() => setShowModal(false)}
-        section="listening"
-        startedAt={startedAt}
-        endedAt={endedAt ?? modalEndedAt}
-        durationSec={durationSec}
-        results={
-          score
-            ? {
-                correct: score.correct,
-                total: score.total,
-                estimatedBand: listeningRawToBand(score.correct),
-              }
-            : null
-        }
-        fallbackSave={saveToScores}
-      />
+      {submitStatus && (
+        <p className="banner banner--warn" role="status">
+          {submitStatus}
+        </p>
+      )}
     </article>
   )
 }

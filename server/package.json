@@ -11,13 +11,16 @@
     "start": "node src/index.js"
   },
   "dependencies": {
+    "@google-cloud/logging-winston": "^6.0.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-winston": "^4.2.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.1",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "winston": "^3.17.0"
   }
 }

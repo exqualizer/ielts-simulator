@@ -3,9 +3,9 @@ import { buildRandomWritingPair } from '../data/writingBank'
 import { useTestTimer } from '../hooks/useTestTimer'
 import { TestTimerBar } from '../components/TestTimerBar'
 import { checkWriting, type WritingCheckResult } from '../lib/writingChecker'
-import { saveWritingScore } from '../lib/scoreStore'
 import { weightedWritingOverall } from '../lib/ieltsBand'
-import { ScoreSummaryModal } from '../components/ScoreSummaryModal'
+import { apiFetch } from '../lib/api'
+import { useAuth } from '../contexts/useAuth'
 
 const WRITING_SEC = 60 * 60
 
@@ -17,6 +17,7 @@ function countWords(s: string): number {
 }
 
 export function WritingPage() {
+  const { user } = useAuth()
   const [sessionKey, setSessionKey] = useState(0)
   const { task1: task1Prompt, task2: task2Prompt } = useMemo(() => {
     void sessionKey
@@ -30,8 +31,8 @@ export function WritingPage() {
   const [task2, setTask2] = useState('')
   const [result1, setResult1] = useState<WritingCheckResult | null>(null)
   const [result2, setResult2] = useState<WritingCheckResult | null>(null)
-  const [showModal, setShowModal] = useState(false)
-  const [modalEndedAt, setModalEndedAt] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null)
 
   const w1 = useMemo(() => countWords(task1), [task1])
   const w2 = useMemo(() => countWords(task2), [task2])
@@ -45,8 +46,8 @@ export function WritingPage() {
     setTask2('')
     setResult1(null)
     setResult2(null)
-    setShowModal(false)
-    setModalEndedAt(null)
+    setSubmitting(false)
+    setSubmitStatus(null)
     reset()
   }
 
@@ -61,38 +62,53 @@ export function WritingPage() {
   function runCheckBoth() {
     setResult1(checkWriting('task1', task1))
     setResult2(checkWriting('task2', task2))
-    setModalEndedAt(new Date().toISOString())
-    setShowModal(true)
+    setSubmitStatus(null)
   }
 
-  function saveToScores() {
-    const t1 = result1
-    const t2 = result2
-    const overall =
-      t1 && t2 ? weightedWritingOverall(t1.estimatedOverallBand, t2.estimatedOverallBand) : 0
-    saveWritingScore({
-      kind: 'writing',
-      createdAt: new Date().toISOString(),
-      overallEstimatedBand: overall,
-      task1: t1
-        ? {
-            kind: 'task1',
-            createdAt: new Date().toISOString(),
-            estimatedBand: t1.estimatedOverallBand,
-            wordCount: t1.wordCount,
-            criteria: t1.criteria.map((c) => ({ criterion: c.criterion, band: c.band })),
-          }
-        : undefined,
-      task2: t2
-        ? {
-            kind: 'task2',
-            createdAt: new Date().toISOString(),
-            estimatedBand: t2.estimatedOverallBand,
-            wordCount: t2.wordCount,
-            criteria: t2.criteria.map((c) => ({ criterion: c.criterion, band: c.band })),
-          }
-        : undefined,
-    })
+  async function completeTest() {
+    setSubmitStatus(null)
+    if (!user) {
+      setSubmitStatus('Please login to save your result. Then view it on the Scores page.')
+      return
+    }
+    if (!startedAt) {
+      setSubmitStatus('Start the test first so time can be recorded.')
+      return
+    }
+    if (!result1 || !result2) {
+      setSubmitStatus('Run the checker for Task 1 + Task 2 first.')
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const results = {
+        task1Band: result1.estimatedOverallBand,
+        task2Band: result2.estimatedOverallBand,
+        overallBand: weightedWritingOverall(result1.estimatedOverallBand, result2.estimatedOverallBand),
+        task1WordCount: result1.wordCount,
+        task2WordCount: result2.wordCount,
+      }
+      await apiFetch('/api/sessions', {
+        method: 'POST',
+        json: {
+          section: 'writing',
+          startedAt,
+          endedAt: endedAt ?? new Date().toISOString(),
+          durationSec,
+          results,
+        },
+      })
+      setSubmitStatus('Completed. View your saved score on the Scores page.')
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === 'object' && 'message' in e
+          ? String((e as { message?: unknown }).message ?? 'Failed to save.')
+          : 'Failed to save.'
+      setSubmitStatus(msg)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -145,7 +161,20 @@ export function WritingPage() {
         >
           Check writing (Task 1 + Task 2)
         </button>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => void completeTest()}
+          disabled={submitting || !result1 || !result2}
+        >
+          {submitting ? 'Completing…' : 'Complete test'}
+        </button>
       </div>
+      {submitStatus && (
+        <p className="banner banner--warn" role="status">
+          {submitStatus}
+        </p>
+      )}
 
       {secondsLeft === 0 && !running && (
         <p className="banner banner--warn" role="status">
@@ -198,26 +227,6 @@ export function WritingPage() {
         />
         {result2 && <WritingResult kindLabel="Task 2" r={result2} />}
       </section>
-      <ScoreSummaryModal
-        open={showModal && Boolean(result1) && Boolean(result2)}
-        onClose={() => setShowModal(false)}
-        section="writing"
-        startedAt={startedAt}
-        endedAt={endedAt ?? modalEndedAt}
-        durationSec={durationSec}
-        results={
-          result1 && result2
-            ? {
-                task1Band: result1.estimatedOverallBand,
-                task2Band: result2.estimatedOverallBand,
-                overallBand: weightedWritingOverall(result1.estimatedOverallBand, result2.estimatedOverallBand),
-                task1WordCount: result1.wordCount,
-                task2WordCount: result2.wordCount,
-              }
-            : null
-        }
-        fallbackSave={saveToScores}
-      />
     </article>
   )
 }

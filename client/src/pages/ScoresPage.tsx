@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { loadScores, type RawSectionScore, type SpeakingSessionScore, type WritingSectionScore } from '../lib/scoreStore'
+import { useEffect, useState } from 'react'
+import type { RawSectionScore, SpeakingSessionScore, WritingSectionScore } from '../lib/scoreStore'
 import { ACADEMIC_READING_TABLE, LISTENING_TABLE } from '../lib/ieltsBand'
 import { useAuth } from '../contexts/useAuth'
 import { apiFetch } from '../lib/api'
@@ -95,7 +95,6 @@ function WritingScore({ w }: { w: WritingSectionScore }) {
 }
 
 export function ScoresPage() {
-  const localScores = useMemo(() => loadScores(), [])
   const { user } = useAuth()
   const [remoteLatest, setRemoteLatest] = useState<Record<string, unknown> | null>(null)
 
@@ -132,7 +131,7 @@ export function ScoresPage() {
   const speaking: SpeakingSessionScore | undefined =
     speakingDoc && speakingDoc.results && typeof speakingDoc.results === 'object'
       ? (speakingDoc.results as SpeakingSessionScore)
-      : localScores.speaking
+      : undefined
 
   const listening: RawSectionScore | undefined =
     listeningDoc && listeningDoc.results && typeof listeningDoc.results === 'object'
@@ -143,7 +142,7 @@ export function ScoresPage() {
         total: numFrom(listeningDoc.results, 'total', 40),
         estimatedBand: numFrom(listeningDoc.results, 'estimatedBand', 0),
       }
-    : localScores.listening
+    : undefined
 
   const reading: RawSectionScore | undefined =
     readingDoc && readingDoc.results && typeof readingDoc.results === 'object'
@@ -154,7 +153,7 @@ export function ScoresPage() {
         total: numFrom(readingDoc.results, 'total', 40),
         estimatedBand: numFrom(readingDoc.results, 'estimatedBand', 0),
       }
-    : localScores.reading
+    : undefined
 
   const writing: WritingSectionScore | undefined =
     writingDoc && writingDoc.results && typeof writingDoc.results === 'object'
@@ -181,7 +180,7 @@ export function ScoresPage() {
             }
           : undefined,
       }
-    : localScores.writing
+    : undefined
 
   return (
     <article className="paper">
@@ -191,47 +190,52 @@ export function ScoresPage() {
           This page shows your most recently saved practice scores. IELTS bands
           are decided by trained examiners — these checkers are guidance only.
         </p>
-        {user && (
+        {user ? (
           <p className="hint" style={{ marginTop: 0 }}>
             Viewing scores for <strong>{user.email}</strong>
+          </p>
+        ) : (
+          <p className="hint" style={{ marginTop: 0 }}>
+            Login to view saved scores.
           </p>
         )}
       </header>
 
-      <section className="panel">
-        <h2>Listening (latest saved)</h2>
-        {!listening ? (
-          <p className="hint">No saved listening score yet. Use Check answers, then Save to Scores page.</p>
-        ) : (
-          <div>
-            <SectionScore s={listening} title="Listening" />
-            <BandConversion title="Listening" table={LISTENING_TABLE} />
-          </div>
-        )}
-      </section>
+      <section className="scores-grid">
+        <div className="grid-item">
+          <h2>Listening (latest saved)</h2>
+          {!listening ? (
+            <p className="hint">No saved listening score yet. Complete a Listening test to save your latest score.</p>
+          ) : (
+            <div>
+              <SectionScore s={listening} title="Listening" />
+              <BandConversion title="Listening" table={LISTENING_TABLE} />
+            </div>
+          )}
+        </div>
 
-      <section className="panel">
-        <h2>Reading (latest saved)</h2>
-        {!reading ? (
-          <p className="hint">No saved reading score yet. Use Check answers, then Save to Scores page.</p>
-        ) : (
-          <div>
-            <SectionScore s={reading} title="Academic Reading" />
-            <BandConversion title="Academic Reading" table={ACADEMIC_READING_TABLE} />
-          </div>
-        )}
-      </section>
+        <div className="grid-item">
+          <h2>Reading (latest saved)</h2>
+          {!reading ? (
+            <p className="hint">No saved reading score yet. Complete a Reading test to save your latest score.</p>
+          ) : (
+            <div>
+              <SectionScore s={reading} title="Academic Reading" />
+              <BandConversion title="Academic Reading" table={ACADEMIC_READING_TABLE} />
+              </div>
+          )}
+        </div>
 
-      <section className="panel">
-        <h2>Writing (latest saved)</h2>
-        {!writing ? (
-          <p className="hint">No saved writing score yet. Run the checker for Task 1 + Task 2, then Save to Scores page.</p>
-        ) : (
-          <WritingScore w={writing} />
-        )}
-      </section>
+        <div className="grid-item">
+          <h2>Writing (latest saved)</h2>
+          {!writing ? (
+            <p className="hint">No saved writing score yet. Run the checker for Task 1 + Task 2, then Save to Scores page.</p>
+          ) : (
+            <WritingScore w={writing} />
+          )}
+        </div>
 
-      <section className="panel">
+        <div className="grid-item">
         <h2>Speaking (latest saved)</h2>
         {!speaking ? (
           <p className="hint">
@@ -316,6 +320,7 @@ export function ScoresPage() {
             </details>
           </div>
         )}
+        </div>
       </section>
 
       <section className="panel">

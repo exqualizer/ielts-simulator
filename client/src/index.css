@@ -360,6 +360,21 @@ code {
   box-shadow: var(--shadow);
 }
 
+.scores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  gap: 1.25rem;
+}
+
+.grid-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
 .panel--accent {
   border-color: var(--accent);
   background: var(--accent-dim);
@@ -397,7 +412,7 @@ code {
 
 .q-list {
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: 1.7rem;
 }
 .q-list > li {
   margin-bottom: 1.25rem;
@@ -481,6 +496,7 @@ code {
   flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .score {
@@ -499,6 +515,81 @@ code {
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
+}
+
+.reading-shell__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.reading-shell__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tab {
+  font: inherit;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.tab--active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.reading-shell__pager {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.reading-shell__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.reading-shell__col {
+  min-height: 0;
+}
+
+.reading-shell__col--questions,
+.reading-shell__col--passage {
+  max-height: min(72vh, 760px);
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.reading-shell__col--passage {
+  position: sticky;
+  top: 0.75rem;
+  align-self: start;
+}
+
+@media (min-width: 980px) {
+  .reading-shell__grid {
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: start;
+  }
+}
+
+.reading-passage__label {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.reading-passage__title {
+  margin: 0.25rem 0 0.75rem;
 }
 
 .passage-body {
@@ -757,6 +848,8 @@ code {
 }
 .modal__card {
   width: min(920px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;

@@ -1,0 +1,8 @@
+**/node_modules
+**/.vite
+**/dist
+**/docs
+**/.DS_Store
+**/.env*
+**/*.log
+

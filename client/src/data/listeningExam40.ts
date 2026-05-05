@@ -439,4 +439,143 @@ Finally, self-monitoring — for instance, using a simple checklist — can incr
       ],
     },
   ],
+  [
+    {
+      title: T1,
+      script: `Car rental booking conversation (extended IELTS-style practice script).
+
+Agent: Good afternoon, Greenway Car Hire. How can I help?
+Customer: Hi, I’d like to book a small car for next week.
+Agent: Certainly. Is this for a short city trip or longer distance driving?
+Customer: Mostly city driving, just for a few days.
+Agent: Okay. Our economy model is available. What date would you like to pick it up?
+Customer: Tuesday the 18th.
+Agent: And what time?
+Customer: Around 9:30 a.m.
+Agent: Great. Returning on Friday the 21st?
+Customer: Yes, that’s right.
+Agent: Perfect. The daily rate is £29, and there’s a refundable deposit of £200.
+Customer: Okay.
+Agent: We also offer optional extras: child seats are £6 per day, and satellite navigation is £5 per day.
+Customer: I’ll take the navigation, but no child seat.
+Agent: No problem. Finally, can I take your email address for confirmation?
+Customer: Yes — it’s alina dot cho at mail dot com.
+Agent: Thanks. I’ll send the booking details shortly.`,
+      ttsChunks: [
+        'Good afternoon, Greenway Car Hire. How can I help?',
+        'I’d like to book a small car for next week.',
+        'Our economy model is available. What date would you like to pick it up?',
+        'Tuesday the eighteenth, at around nine thirty a.m.',
+        'Returning on Friday the twenty-first.',
+        'The daily rate is twenty-nine pounds, and the refundable deposit is two hundred pounds.',
+        'Optional extras: child seats are six pounds per day, and satellite navigation is five pounds per day.',
+        'I’ll take the navigation, but no child seat.',
+        'Please tell me your email address for confirmation.',
+      ],
+      questions: [
+        g('Pick-up day (one word)', ['tuesday']),
+        g('Pick-up date (number)', ['18', 'eighteenth', 'eighteen']),
+        g('Pick-up time (numbers)', ['9:30', '930', '9 30', 'nine thirty']),
+        g('Return day (one word)', ['friday']),
+        g('Return date (number)', ['21', 'twenty-first', 'twenty first', 'twentyone']),
+        g('Daily rate in pounds', ['29', 'twenty-nine', 'twentynine']),
+        g('Refundable deposit in pounds', ['200', 'two hundred', 'twohundred']),
+        mcq('The customer chooses:', ['A child seat', 'Satellite navigation', 'An insurance upgrade'], 1),
+        mcq('Child seat cost per day is:', ['£5', '£6', '£9'], 1),
+        mcq('The booking confirmation is sent by:', ['Text message', 'Email', 'Post'], 1),
+      ],
+    },
+    {
+      title: T2,
+      script: `Park safety announcement (extended IELTS-style practice script).
+
+Ranger: Welcome to Pine Ridge National Park. Before you set off, please listen to a few safety notes.
+Today, the weather is expected to change quickly. If you’re hiking, bring a waterproof jacket even if the sky looks clear.
+The eastern trail is currently closed due to fallen trees, so please use the lake route instead.
+If you need assistance, call the visitor centre on 3307. That number again: 3307.
+Finally, please remember that open fires are not permitted anywhere in the park.
+Thank you, and enjoy your visit.`,
+      ttsChunks: [
+        'Welcome to Pine Ridge National Park. Please listen to a few safety notes.',
+        'The weather may change quickly, so bring a waterproof jacket.',
+        'The eastern trail is closed. Please use the lake route instead.',
+        'For assistance, call the visitor centre on three three zero seven.',
+        'Open fires are not permitted anywhere in the park.',
+      ],
+      questions: [
+        mcq('The speaker is a:', ['Shop assistant', 'Park ranger', 'Bus driver'], 1),
+        mcq('Visitors are advised to bring:', ['Sunglasses', 'A waterproof jacket', 'A tent'], 1),
+        mcq('The eastern trail is closed because of:', ['Snow', 'Fallen trees', 'A marathon'], 1),
+        mcq('Instead of the eastern trail, visitors should use:', ['The lake route', 'The city route', 'The tunnel'], 0),
+        g('Visitor centre phone number', ['3307', 'three three zero seven', 'three three oh seven']),
+        mcq('Open fires are:', ['Allowed in some areas', 'Not permitted', 'Required'], 1),
+        g('Park name (two words)', ['pine ridge']),
+        mcq('The weather is expected to:', ['Stay the same all day', 'Change quickly', 'Be extremely hot'], 1),
+        mcq('The announcement is given:', ['Before visitors set off', 'At the end of the day', 'After lunch'], 0),
+        mcq('The lake route is mentioned as:', ['An alternative route', 'A ticket office', 'A campsite'], 0),
+      ],
+    },
+    {
+      title: T3,
+      script: `Two students discussing a group project (extended IELTS-style practice script).
+
+Student A: We need to decide our research question for the psychology project.
+Student B: I suggest we look at how sleep affects concentration in lectures.
+Student A: That’s good. Should we do an experiment or just a questionnaire?
+Student B: The lecturer recommended a mixed approach, but we don’t have time for a full experiment.
+Student A: So questionnaire plus short interviews?
+Student B: Yes. Also, the proposal form is due on Thursday at 2 p.m.
+Student A: Thursday, two o’clock.
+Student B: And the final report has a word limit of 2,000, excluding references.
+Student A: Okay. I’ll draft the questionnaire this weekend.`,
+      ttsChunks: [
+        'We need to decide our research question for the psychology project.',
+        'Let’s look at how sleep affects concentration in lectures.',
+        'The lecturer recommended a mixed approach, but we do not have time for a full experiment.',
+        'The proposal form is due on Thursday at two p.m.',
+        'The final report word limit is two thousand, excluding references.',
+      ],
+      questions: [
+        mcq('The project topic is about sleep and:', ['Diet', 'Concentration', 'Exercise'], 1),
+        mcq('They decide to use:', ['Only an experiment', 'Questionnaire plus interviews', 'Only interviews'], 1),
+        g('Proposal deadline day (one word)', ['thursday']),
+        g('Proposal deadline time (number)', ['2', 'two', '14']),
+        mcq('The lecturer recommended:', ['No research', 'A mixed approach', 'A long experiment'], 1),
+        g('Report word limit (number)', ['2000', '2,000', 'two thousand', 'two thousand']),
+        mcq('The word limit excludes:', ['References', 'Charts', 'Title page'], 0),
+        mcq('Student A will draft:', ['The slides', 'The questionnaire', 'The budget'], 1),
+        mcq('They do not have time for:', ['Interviews', 'A full experiment', 'A proposal'], 1),
+        mcq('The research field is:', ['Psychology', 'Chemistry', 'History'], 0),
+      ],
+    },
+    {
+      title: T4,
+      script: `Lecture extract on urban heat islands (extended IELTS-style practice script).
+
+Lecturer: Many large cities are warmer than the surrounding countryside. This is known as the urban heat island effect.
+One major cause is the abundance of dark surfaces such as asphalt, which absorb heat during the day and release it slowly at night.
+Another factor is reduced vegetation. Trees provide shade and cool the air through evaporation.
+Cities can reduce heat islands by increasing green roofs, planting street trees, and using reflective building materials.
+These measures not only lower temperatures but can also reduce energy demand for air conditioning.`,
+      ttsChunks: [
+        'Many large cities are warmer than the surrounding countryside. This is called the urban heat island effect.',
+        'Dark surfaces such as asphalt absorb heat and release it slowly at night.',
+        'Reduced vegetation is another factor. Trees provide shade and cool the air through evaporation.',
+        'Cities can reduce heat islands by increasing green roofs, planting street trees, and using reflective materials.',
+        'These measures can also reduce energy demand for air conditioning.',
+      ],
+      questions: [
+        mcq('Urban heat island effect means cities are:', ['Cooler than countryside', 'Warmer than countryside', 'The same temperature'], 1),
+        mcq('A major cause mentioned is:', ['Snow', 'Asphalt', 'Ocean currents'], 1),
+        mcq('Dark surfaces absorb heat during the:', ['Night', 'Day', 'Winter only'], 1),
+        mcq('Heat is released slowly at:', ['Night', 'Noon', 'Morning'], 0),
+        mcq('Reduced vegetation affects:', ['Air cooling', 'Traffic speed', 'Library fees'], 0),
+        g('Trees cool the air through', ['evaporation']),
+        mcq('One solution is to increase:', ['Green roofs', 'Car parks', 'Billboards'], 0),
+        mcq('Reflective materials help by:', ['Absorbing more heat', 'Reducing heat absorption', 'Blocking wind'], 1),
+        mcq('Lower temperatures can reduce:', ['Energy demand', 'Rainfall', 'Noise'], 0),
+        mcq('The lecture is mainly about:', ['City climate', 'Space travel', 'Sports science'], 0),
+      ],
+    },
+  ],
 ]

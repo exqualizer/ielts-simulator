@@ -12,16 +12,21 @@ sessionsRouter.post('/', authRequired, async (req, res) => {
       return res.status(400).json({ error: 'Validation Error', message: 'Missing required session fields.' })
     }
 
-    const doc = await TestSession.create({
-      userId,
-      section,
-      startedAt: new Date(startedAt),
-      endedAt: new Date(endedAt),
-      durationSec,
-      results,
-    })
+    const doc = await TestSession.findOneAndUpdate(
+      { userId, section },
+      {
+        userId,
+        section,
+        startedAt: new Date(startedAt),
+        endedAt: new Date(endedAt),
+        durationSec,
+        results,
+        savedAt: new Date(),
+      },
+      { upsert: true, new: true },
+    ).lean()
 
-    return res.json({ id: doc._id.toString(), message: 'Saved.' })
+    return res.json({ id: doc?._id?.toString?.() ?? null, message: 'Saved.' })
   } catch {
     return res.status(500).json({ error: 'Internal Server Error', message: 'Failed to save session.' })
   }
@@ -35,7 +40,7 @@ sessionsRouter.get('/latest', authRequired, async (req, res) => {
     const out = {}
     await Promise.all(
       sections.map(async (section) => {
-        const doc = await TestSession.findOne({ userId, section }).sort({ createdAt: -1 }).lean()
+        const doc = await TestSession.findOne({ userId, section }).sort({ savedAt: -1 }).lean()
         if (doc) out[section] = doc
       }),
     )

@@ -10,7 +10,6 @@ type BaseProps = {
   endedAt: string | null
   durationSec: number
   results: unknown
-  fallbackSave?: () => void
 }
 
 function fmt(dt: string | null): string {
@@ -37,7 +36,6 @@ export function ScoreSummaryModal({
   endedAt,
   durationSec,
   results,
-  fallbackSave,
 }: BaseProps) {
   const { user } = useAuth()
   const [saving, setSaving] = useState(false)
@@ -53,8 +51,7 @@ export function ScoreSummaryModal({
     }
 
     if (!user) {
-      fallbackSave?.()
-      setStatus('Saved locally (not logged in).')
+      setStatus('Please login to save your score to your account.')
       return
     }
 
@@ -126,8 +123,8 @@ export function ScoreSummaryModal({
         )}
 
         <div className="actions-row" style={{ marginTop: '0.75rem' }}>
-          <button type="button" className="btn btn--primary" onClick={() => void onSave()} disabled={saving}>
-            {saving ? 'Saving…' : user ? 'Save to my account' : 'Save locally'}
+          <button type="button" className="btn btn--primary" onClick={() => void onSave()} disabled={saving || !user}>
+            {saving ? 'Saving…' : 'Save to my account'}
           </button>
         </div>
       </div>
